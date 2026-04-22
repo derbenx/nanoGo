@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>NanoGo Pro Editor</title>
+</head>
+<body>
+    <div id="app">
+        <div class="tabs">
+            <div class="tab active" data-tab="create">Create</div>
+            <div class="tab" data-tab="batches">Batches</div>
+            <div class="tab" data-tab="settings">Settings</div>
+            <div class="tab" data-tab="chat">Chat</div>
+            <div class="tab" data-tab="help">Help</div>
+        </div>
+
+        <div id="tab-create" class="tab-content main-content">
+            <div class="left-panel" id="create-left">
+                <div class="top-split">
+                    <div class="panel-header">
+                        <span>Images</span>
+                        <div class="header-btns">
+                            <button onclick="window.OpenImageFolder()">Image Folder</button>
+                            <button onclick="window.ClearImages()" style="background-color: #e67e22">Clear Images</button>
+                            <button onclick="window.SelectAndAddMultipleImages()">Add Images</button>
+                            <button onclick="window.CreateNewImage()">New Image</button>
+                        </div>
+                    </div>
+                    <div class="list-header">
+                        <span style="width: 30px">Sel</span>
+                        <span style="width: 30px">#</span>
+                        <span style="width: 60px">MBs</span>
+                        <span style="width: 50px">Tasks</span>
+                        <span style="flex: 1">Image</span>
+                    </div>
+                    <div id="image-list" class="list-content"></div>
+                </div>
+                <div class="bottom-split">
+                    <div class="panel-header">
+                        <span>Tasks</span>
+                        <div class="header-btns">
+                            <button onclick="window.ClearTasks()" style="background-color: #e74c3c">Clear Tasks</button>
+                            <button onclick="window.AddTaskFromUI()">Add Task</button>
+                        </div>
+                    </div>
+                    <div class="list-header">
+                        <span style="width: 60px">Img</span>
+                        <span style="width: 120px">Tier</span>
+                        <span style="width: 60px">Ratio</span>
+                        <span style="width: 100px">Status</span>
+                        <span style="flex: 1">Prompt</span>
+                    </div>
+                    <div id="task-list" class="list-content"></div>
+                </div>
+                <div class="btn-group">
+                    <button id="btn-load-session">Load Session</button>
+                    <button id="btn-save-session">Save Session</button>
+                    <div style="flex: 1"></div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-right: 20px; font-size: 0.85em;">
+                        <label style="font-weight: bold; color: #f1c40f;">Free Mode:</label>
+                        <input type="checkbox" id="image-free-mode" onchange="window.ToggleFreeMode('image', this.checked)">
+                    </div>
+                    <button id="btn-run-immediate" style="background-color: #27ae60">RUN IMMEDIATE</button>
+                    <button id="btn-run-batch" style="background-color: #8e44ad">RUN BATCH</button>
+                </div>
+            </div>
+            <div id="main-resizer" class="resizer-v"></div>
+            <div class="right-panel" id="create-right">
+                <div id="editor-container">
+                    <div class="input-field">
+                        <label>Source IDs:</label>
+                        <input type="text" id="source-ids" onchange="window.UpdateTaskFromUI()">
+                    </div>
+                    <div class="input-field">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+                            <label style="margin-bottom: 0;">Positive Prompt:</label>
+                            <div style="display: flex; align-items: center; gap: 5px; font-size: 0.85em;">
+                                <label style="margin-bottom: 0; font-weight: normal;">Return Thought:</label>
+                                <input type="checkbox" id="return-thought" onchange="window.UpdateTaskFromUI()">
+                            </div>
+                        </div>
+                        <textarea id="prompt" rows="10" onchange="window.UpdateTaskFromUI()" spellcheck="true"></textarea>
+                    </div>
+                    <div class="input-field">
+                        <label>Negative Prompt:</label>
+                        <textarea id="neg-prompt" rows="3" onchange="window.UpdateTaskFromUI()" spellcheck="true"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="input-field" style="flex: 1;">
+                            <label>Tier:</label>
+                            <select id="tier-select" onchange="window.UpdateTaskFromUI()">
+                                <option>Nano Flash 1K</option>
+                                <option>Nano Pro 1K</option>
+                                <option>Nano Pro 2K</option>
+                                <option>Nano Pro 4K</option>
+                                <option>Nano 2 1K</option>
+                                <option>Nano 2 2K</option>
+                                <option>Nano 2 4K</option>
+                                <option>Imagen 2K</option>
+                                <option>Imagen Ultra 2K</option>
+                            </select>
+                        </div>
+                        <div class="input-field" style="flex: 1;">
+                            <label>Aspect Ratio:</label>
+                            <select id="ratio-select" onchange="window.UpdateTaskFromUI(); window.updateRatioPreview()">
+                                <option>1:8</option>
+                                <option>1:4</option>
+                                <option>9:16</option>
+                                <option>2:3</option>
+                                <option>3:4</option>
+                                <option>4:5</option>
+                                <option>1:1</option>
+                                <option>5:4</option>
+                                <option>4:3</option>
+                                <option>3:2</option>
+                                <option>16:9</option>
+                                <option>21:9</option>
+                                <option>4:1</option>
+                                <option>8:1</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="ratio-preview-container" style="margin-top: 10px; display: flex; justify-content: center; background: #1a2533; border: 1px solid #34495e; padding: 10px; border-radius: 5px;">
+                        <canvas id="ratio-canvas" width="120" height="120" style="background-color: #0d1117; border: 1px dashed #555;"></canvas>
+                    </div>
+                    <div id="cost-display" style="font-weight: bold; font-size: 1.0em; color: #f1c40f; margin-top: 10px;">Immediate: $0.0000 | Batch: $0.0000</div>
+                </div>
+                <div id="preview-container" style="display: none;">
+                    <div id="image-preview">No image selected</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-batches" class="tab-content" style="display: none; height: calc(100% - 41px - 150px); overflow-y: auto; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Active Batch Jobs</h2>
+                <div id="batch-timer-container" style="font-weight: bold; color: #3498db;">Next check in: --s</div>
+                <button onclick="window.ClearFinishedJobs()" style="background-color: #e74c3c">Clear Finished</button>
+            </div>
+            <div id="batch-list"></div>
+        </div>
+        <div id="tab-help" class="tab-content" style="display: none; height: calc(100% - 41px); overflow-y: auto; padding: 40px; line-height: 1.6; color: #ecf0f1; background-color: #0d1117;">
+            <div style="max-width: 900px; margin: 0 auto;">
+                <h1 style="color: #3498db; border-bottom: 2px solid #34495e; padding-bottom: 10px; margin-bottom: 30px;">NanoGo Pro Guide</h1>
+
+                <section style="margin-bottom: 40px;">
+                    <h2 style="color: #f1c40f;">🚀 Getting Started</h2>
+                    <p>NanoGo Pro is a high-performance frontend for Google's Gemini models, supporting both <strong>Image Generation</strong> and <strong>AI Chat</strong>. To start, head to the <strong>Settings</strong> tab and enter at least one API Key.</p>
+                </section>
+
+                <section style="margin-bottom: 40px;">
+                    <h2 style="color: #f1c40f;">🖼️ Image Generation (Create Tab)</h2>
+                    <ul style="padding-left: 20px;">
+                        <li><strong>Adding Images:</strong> Drag and drop image files anywhere on the app, or use the <strong>Add Images</strong> button. Use <strong>New Image</strong> to create a <code>&lt;GENERATE&gt;</code> placeholder for text-to-image tasks.</li>
+                        <li><strong>Creating Tasks:</strong> Select images using the checkboxes and click <strong>Add Task</strong>. You can merge multiple images into one task (e.g., for reference) by checking multiple boxes.</li>
+                        <li><strong>Source IDs:</strong> You can manually edit these. <code>1+2</code> will use both images. The field auto-filters non-existent IDs after 2 seconds.</li>
+                        <li><strong>Aspect Ratio:</strong> The app auto-picks the closest matching ratio when you add an image. Extreme ratios (1:4, 8:1) are exclusive to the <strong>Nano 2</strong> tier.</li>
+                        <li><strong>Return Thought:</strong> Enable this to save the AI's reasoning as a <code>.txt</code> file alongside your image.</li>
+                        <li><strong>Execution:</strong>
+                            <ul style="margin-top: 10px;">
+                                <li><strong>Immediate:</strong> Runs tasks locally and sequentially. Best for single prompt-only tasks.</li>
+                                <li><strong>Batch:</strong> Submits tasks to Google's cloud for 50% cheaper processing. Recommended for large sets of images.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </section>
+
+                <section style="margin-bottom: 40px;">
+                    <h2 style="color: #f1c40f;">💬 AI Chat</h2>
+                    <p>A simple yet powerful multi-turn chat interface.</p>
+                    <ul style="padding-left: 20px;">
+                        <li><strong>Personality:</strong> Set a system prompt to define how the AI behaves (e.g., "You are a coding expert").</li>
+                        <li><strong>Memory Slots:</strong> Controls how many previous message pairs are kept in context.</li>
+                        <li><strong>Initial Memory:</strong> If enabled, the very first exchange is always kept, helping the AI remember its primary goal throughout a long session.</li>
+                        <li><strong>Cost Estimate:</strong> Shows a character-based token cost approximation for the current input plus active memory.</li>
+                    </ul>
+                </section>
+
+                <section style="margin-bottom: 40px;">
+                    <h2 style="color: #f1c40f;">⚙️ API & Settings</h2>
+                    <ul style="padding-left: 20px;">
+                        <li><strong>Dual Keys:</strong> Use separate <strong>Paid</strong> and <strong>Free</strong> keys. Toggle <strong>Free Mode</strong> in the Chat or Create tabs to switch between them instantly.</li>
+                        <li><strong>Batch Monitoring:</strong> The app persists Job IDs in <code>jobs.txt</code>. It will resume tracking them even if you restart the application.</li>
+                        <li><strong>Resets:</strong> Use the <strong>Reset</strong> buttons next to individual sections to restore default values without wiping your API keys or paths.</li>
+                    </ul>
+                </section>
+
+                <section style="margin-bottom: 40px;">
+                    <h2 style="color: #f1c40f;">⌨️ Keyboard & UI Shortcuts</h2>
+                    <ul style="padding-left: 20px;">
+                        <li><strong>Tab Cycling:</strong> Use <code>Ctrl + Tab</code> and <code>Ctrl + Shift + Tab</code> to quickly switch views.</li>
+                        <li><strong>Context Menus:</strong> Right-click images or tasks for advanced options (Delete, Duplicate, Show Image, Change Reference).</li>
+                        <li><strong>Layout:</strong> Drag the vertical bar in the <strong>Create</strong> tab to resize your workspace. This position is saved automatically.</li>
+                        <li><strong>Sessions:</strong> Use <strong>Save/Load Session</strong> to keep track of complex task lists. You can also drop a <code>.json</code> session file directly onto the app.</li>
+                    </ul>
+                </section>
+
+                <footer style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #34495e; font-size: 0.9em; text-align: center; color: #7f8c8d;">
+                    NanoGo Pro - Powered by Gemini & Wails
+                </footer>
+            </div>
+        </div>
+        <div id="tab-chat" class="tab-content" style="display: none; height: calc(100% - 41px - 150px); flex-direction: column; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h2>Chat with AI</h2>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="display: flex; align-items: center; gap: 5px; font-size: 0.85em;">
+                        <label style="font-weight: bold; color: #3498db;">Memory:</label>
+                        <input type="checkbox" id="chat-memory-enabled" onchange="window.UpdateChatConfig()">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px; font-size: 0.85em;">
+                        <label title="Keep the very first message/reply pair always in context">Initial:</label>
+                        <input type="checkbox" id="chat-remember-initial" onchange="window.UpdateChatConfig()">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px; font-size: 0.85em;">
+                        <label>Slots:</label>
+                        <input type="number" id="chat-memory-slots" min="1" max="50" style="width: 40px; background: #1a2533; border: 1px solid #34495e; color: white;" onchange="window.UpdateChatConfig()">
+                    </div>
+                    <button onclick="window.ClearChatMemory()" style="padding: 2px 8px; font-size: 0.8em; background-color: #e67e22;">Clear Mem</button>
+
+                    <div style="width: 20px;"></div>
+
+                    <div style="display: flex; align-items: center; gap: 5px; font-size: 0.85em;">
+                        <label style="font-weight: bold; color: #f1c40f;">Free:</label>
+                        <input type="checkbox" id="chat-free-mode" onchange="window.ToggleFreeMode('chat', this.checked)">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label>Agent:</label>
+                        <select id="chat-agent-select" style="min-width: 150px;"></select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chat-history" style="flex: 1; background-color: #151d29; border: 1px solid #34495e; border-radius: 8px; padding: 15px; overflow-y: auto; margin-bottom: 15px; font-family: 'Consolas', 'Monaco', monospace; white-space: pre-wrap;"></div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 0.8em; color: #888;">Personality:</label>
+                    <textarea id="chat-system-prompt" rows="3" placeholder="System personality..." style="width: 100%; background-color: #1a2533; border: 1px solid #34495e; color: #bdc3c7; padding: 8px; border-radius: 5px; resize: none; font-size: 0.9em;" onchange="window.UpdateChatConfig()" spellcheck="true"></textarea>
+                </div>
+                <textarea id="chat-input" rows="3" placeholder="Type your message here..." style="width: 100%; background-color: #1a2533; border: 1px solid #34495e; color: #ecf0f1; padding: 10px; border-radius: 5px; resize: none;" spellcheck="true"></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div id="chat-cost-estimate" style="font-weight: bold; color: #f1c40f;">Estimate: $0.0000</div>
+                    <button onclick="window.SendChatMessage()" style="background-color: #27ae60; padding: 10px 30px;">Send Message</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-settings" class="tab-content" style="display: none; height: calc(100% - 41px); overflow-y: auto; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Settings</h2>
+            </div>
+            <div class="settings-grid">
+                <div class="settings-section">
+                    <h3>API & Path</h3>
+                    <div class="input-field">
+                        <label>Paid API Key:</label>
+                        <div style="display: flex; gap: 5px; flex: 1;">
+                            <input type="password" id="settings-api-key-paid" style="flex: 1;">
+                            <button onclick="window.TogglePassword('settings-api-key-paid')" style="padding: 5px 8px;">👁</button>
+                            <button onclick="window.TestConnection('paid')" style="padding: 5px 10px;">Test</button>
+                            <span id="test-api-status-paid" style="font-weight: bold; font-size: 0.9em; min-width: 60px;"></span>
+                        </div>
+                    </div>
+                    <div class="input-field">
+                        <label>Free API Key:</label>
+                        <div style="display: flex; gap: 5px; flex: 1;">
+                            <input type="password" id="settings-api-key-free" style="flex: 1;">
+                            <button onclick="window.TogglePassword('settings-api-key-free')" style="padding: 5px 8px;">👁</button>
+                            <button onclick="window.TestConnection('free')" style="padding: 5px 10px;">Test</button>
+                            <span id="test-api-status-free" style="font-weight: bold; font-size: 0.9em; min-width: 60px;"></span>
+                        </div>
+                    </div>
+                    <div class="input-field">
+                        <label>Output Directory:</label>
+                        <div style="display: flex; gap: 5px; flex: 1;">
+                            <input type="text" id="settings-output-dir" style="flex: 1;">
+                        </div>
+                    </div>
+                    <div class="input-field">
+                        <label>Return AI Thought (Global Default):</label>
+                        <input type="checkbox" id="settings-return-thought">
+                    </div>
+                    <div class="input-field">
+                        <label>Debug Mode:</label>
+                        <input type="checkbox" id="settings-debug">
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Default Prompts</h3>
+                    <div class="input-field">
+                        <label>Positive Prompt:</label>
+                        <div style="display: flex; flex-direction: column; flex: 1; gap: 5px;">
+                            <textarea id="settings-default-prompt" rows="3"></textarea>
+                            <button onclick="window.ResetToDefault('default_prompt')" style="align-self: flex-end;">Reset</button>
+                        </div>
+                    </div>
+                    <div class="input-field">
+                        <label>Negative Prompt:</label>
+                        <div style="display: flex; flex-direction: column; flex: 1; gap: 5px;">
+                            <textarea id="settings-default-neg-prompt" rows="3"></textarea>
+                            <button onclick="window.ResetToDefault('default_neg_prompt')" style="align-self: flex-end;">Reset</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Generation Hints</h3>
+                    <div class="input-field">
+                        <label>Encourage Generation:</label>
+                        <div style="display: flex; flex-direction: column; flex: 1; gap: 5px;">
+                            <textarea id="settings-encourage-gen" rows="3"></textarea>
+                            <button onclick="window.ResetToDefault('encourage_gen')" style="align-self: flex-end;">Reset</button>
+                        </div>
+                    </div>
+                    <div class="input-field">
+                        <label>Encourage Editing:</label>
+                        <div style="display: flex; flex-direction: column; flex: 1; gap: 5px;">
+                            <textarea id="settings-encourage-edt" rows="3"></textarea>
+                            <button onclick="window.ResetToDefault('encourage_edt')" style="align-self: flex-end;">Reset</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Parameters</h3>
+                    <div class="input-field">
+                        <label>Temperature (0-2):</label>
+                        <div style="display: flex; gap: 5px; flex: 1;">
+                            <input type="number" id="settings-temp" step="0.1" min="0" max="2" style="flex: 1;">
+                            <button onclick="window.ResetToDefault('temperature')" style="padding: 5px 10px;">Reset</button>
+                        </div>
+                    </div>
+                    <div class="input-field">
+                        <label>Top P (0-1):</label>
+                        <div style="display: flex; gap: 5px; flex: 1;">
+                            <input type="number" id="settings-top-p" step="0.05" min="0" max="1" style="flex: 1;">
+                            <button onclick="window.ResetToDefault('top_p')" style="padding: 5px 10px;">Reset</button>
+                        </div>
+                    </div>
+                    <div class="input-field">
+                        <label>Top K:</label>
+                        <div style="display: flex; gap: 5px; flex: 1;">
+                            <input type="number" id="settings-top-k" style="flex: 1;">
+                            <button onclick="window.ResetToDefault('top_k')" style="padding: 5px 10px;">Reset</button>
+                        </div>
+                    </div>
+                    <div class="input-field">
+                        <label>Max Output Tokens:</label>
+                        <div style="display: flex; gap: 5px; flex: 1;">
+                            <input type="number" id="settings-max-tokens" style="flex: 1;">
+                            <button onclick="window.ResetToDefault('max_output_tokens')" style="padding: 5px 10px;">Reset</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Safety Thresholds</h3>
+                    <div class="input-field">
+                        <label>Harassment:</label>
+                        <select id="safety-harassment">
+                            <option>BLOCK_NONE</option>
+                            <option>BLOCK_ONLY_HIGH</option>
+                            <option>BLOCK_MEDIUM_AND_ABOVE</option>
+                            <option>BLOCK_LOW_AND_ABOVE</option>
+                        </select>
+                    </div>
+                    <div class="input-field">
+                        <label>Hate Speech:</label>
+                        <select id="safety-hate">
+                            <option>BLOCK_NONE</option>
+                            <option>BLOCK_ONLY_HIGH</option>
+                            <option>BLOCK_MEDIUM_AND_ABOVE</option>
+                            <option>BLOCK_LOW_AND_ABOVE</option>
+                        </select>
+                    </div>
+                    <div class="input-field">
+                        <label>Sexually Explicit:</label>
+                        <select id="safety-sex">
+                            <option>BLOCK_NONE</option>
+                            <option>BLOCK_ONLY_HIGH</option>
+                            <option>BLOCK_MEDIUM_AND_ABOVE</option>
+                            <option>BLOCK_LOW_AND_ABOVE</option>
+                        </select>
+                    </div>
+                    <div class="input-field">
+                        <label>Dangerous Content:</label>
+                        <select id="safety-danger">
+                            <option>BLOCK_NONE</option>
+                            <option>BLOCK_ONLY_HIGH</option>
+                            <option>BLOCK_MEDIUM_AND_ABOVE</option>
+                            <option>BLOCK_LOW_AND_ABOVE</option>
+                        </select>
+                    </div>
+                    <button onclick="window.ResetToDefault('safety_settings')" style="align-self: flex-end; margin-top: 5px;">Reset Safety</button>
+                </div>
+                <div class="settings-section">
+                    <h3>Custom Model IDs</h3>
+                    <div class="input-field"><label>Nano Flash:</label><input type="text" id="settings-model-flash"></div>
+                    <div class="input-field"><label>Nano Pro:</label><input type="text" id="settings-model-pro"></div>
+                    <div class="input-field"><label>Nano 2:</label><input type="text" id="settings-model-2"></div>
+                    <div class="input-field"><label>Imagen:</label><input type="text" id="settings-model-imagen"></div>
+                    <div class="input-field"><label>Imagen Ultra:</label><input type="text" id="settings-model-ultra"></div>
+                    <button onclick="window.ResetToDefault('models')" style="align-self: flex-end; margin-top: 5px;">Reset Models</button>
+                </div>
+                <div class="settings-section">
+                    <h3>Chat Models</h3>
+                    <div class="input-field">
+                        <div style="display: flex; flex-direction: column; flex: 1; gap: 5px;">
+                            <textarea id="settings-chat-models" rows="10"></textarea>
+                            <button onclick="window.ResetToDefault('chat_model_list')" style="align-self: flex-end;">Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-footer">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span id="settings-saved-msg" style="color: #2ecc71; display: none;">Saved!</span>
+                    <button onclick="window.SaveSettings()" style="background-color: #27ae60">Save All Configuration</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="logs" class="log-area"></div>
+    </div>
+    <script src="./src/main.js" type="module"></script>
+</body>
+</html>
