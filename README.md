@@ -15,7 +15,7 @@ Use two API keys and swap between them.
 Configure many settings you don't get via web, see images.
 No visual watermarks!
 
-##Compile
+## Compile
 
 To compile this you need Golang and Wails installed.
 
