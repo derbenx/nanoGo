@@ -2,8 +2,9 @@
 
 ## About
 
-This is nanoGo, it uses the google API for nano banana and imagen to create and edit images.
-You will need to sign up to google for an API key.
+This is nanoGo Beta, it uses the google API for nano banana and imagen to create and edit images.
+You will need to sign up to google for an API key. 
+There may still be bugs as it is still beta, features may change as the final version ripens.
 
 You can:
 generatea new image via text prompt
@@ -32,3 +33,8 @@ To build a redistributable, production mode package, use `wails build`.
 <img src="nanoGo3.png">
 <img src="nanoGo4.png">
 <img src="nanoGo5.png">
+
+## To Do:
+There is spell check.. it makes the red squiggles.. but that's it so far.
+Veo video support would be great addition to this!
+I'd like to add speech/music too.
