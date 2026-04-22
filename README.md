@@ -25,3 +25,10 @@ and have access to your Go methods, there is also a dev server that runs on http
 to this in your browser, and you can call your Go code from devtools.
 
 To build a redistributable, production mode package, use `wails build`.
+
+## Images:
+<img src="nanoGo1.png">
+<img src="nanoGo2.png">
+<img src="nanoGo3.png">
+<img src="nanoGo4.png">
+<img src="nanoGo5.png">
